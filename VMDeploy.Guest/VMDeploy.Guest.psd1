@@ -26,7 +26,7 @@
 	# Modules that must be imported into the global environment prior to importing
 	# this module
 	RequiredModules = @(
-		@{ ModuleName='PSFramework'; ModuleVersion='1.6.193' }
+		@{ ModuleName='PSFramework'; ModuleVersion='1.6.195' }
 	)
 	
 	# Assemblies that must be loaded prior to importing this module
@@ -36,19 +36,20 @@
 	# TypesToProcess = @('xml\VMDeploy.Guest.Types.ps1xml')
 	
 	# Format files (.ps1xml) to be loaded when importing this module
-	# FormatsToProcess = @('xml\VMDeploy.Guest.Format.ps1xml')
+	FormatsToProcess = @('xml\VMDeploy.Guest.Format.ps1xml')
 	
 	# Functions to export from this module
-	FunctionsToExport = ''
-	
-	# Cmdlets to export from this module
-	CmdletsToExport = ''
-	
-	# Variables to export from this module
-	VariablesToExport = ''
-	
-	# Aliases to export from this module
-	AliasesToExport = ''
+	FunctionsToExport = @(
+		'Clear-VMGuestConfiguration'
+		'Get-VMGuestAction'
+		'Get-VMGuestConfiguration'
+		'Import-VMGuestConfiguration'
+		'Invoke-VMGuestConfiguration'
+		'Register-VMGuestAction'
+		'Register-VMGuestConfiguration'
+		'Test-VMGuestConfiguration'
+		'Unregister-VMGuestAction'
+	)
 	
 	# List of all modules packaged with this module
 	ModuleList = @()
