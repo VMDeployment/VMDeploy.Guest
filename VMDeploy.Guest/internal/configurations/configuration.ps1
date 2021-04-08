@@ -13,3 +13,6 @@ Set-PSFConfig -Module 'VMDeploy.Guest' -Name 'Example.Setting' -Value 10 -Initia
 
 Set-PSFConfig -Module 'VMDeploy.Guest' -Name 'Import.DoDotSource' -Value $false -Initialize -Validation 'bool' -Description "Whether the module files should be dotsourced on import. By default, the files of this module are read as string value and invoked, which is faster but worse on debugging."
 Set-PSFConfig -Module 'VMDeploy.Guest' -Name 'Import.IndividualFiles' -Value $false -Initialize -Validation 'bool' -Description "Whether the module files should be imported individually. During the module build, all module code is compiled into few files, which are imported instead by default. Loading the compiled versions is faster, using the individual files is easier for debugging and testing out adjustments."
+
+Set-PSFConfig -Module 'VMDeploy.Guest' -Name 'Invoke.MaxRetryCount' -Value 10 -Initialize -Validation 'integer' -Description 'The maximum number of attempts to invoke configuration Invoke-VMGuestConfiguration is willing to attempt before giving up.'
+Set-PSFConfig -Module 'VMDeploy.Guest' -Name 'Invoke.CurrentRetryCount' -Value 0 -Initialize -Validation 'integer' -ModuleExport -Description 'How many times we have already tried invoking configuration using Invoke-VMGuestConfiguration.'

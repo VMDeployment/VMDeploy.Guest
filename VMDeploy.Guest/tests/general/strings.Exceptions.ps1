@@ -13,7 +13,11 @@ $exceptions['LegalSurplus'] = @(
 )
 #>
 $exceptions['LegalSurplus'] = @(
-
+	
+)
+$exceptions['IgnoreString'] = @(
+	'key' # Template default key
+	'Validate.FSPath.File'
 )
 
 $exceptions

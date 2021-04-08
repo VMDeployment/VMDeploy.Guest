@@ -5,7 +5,7 @@
 	
 	$exists = Test-Path -LiteralPath $Parameters.Path -PathType Container
 	if (-not $exists) { return $false }
-	$item = Get-Item -LiteralPath $Parameters.Path
+	$item = Get-Item -LiteralPath $Parameters.Path -Force
 	$item.PSProvider.Name -eq 'FileSystem'
 }
 
@@ -14,9 +14,8 @@ $scriptblock = {
 		$Parameters
 	)
 	
-	$exists = Test-Path -LiteralPath $Parameters.Path -PathType Container
-	if ($exists) { return }
-	$null = New-Item -Path $Parameters.Path -ItemType Directory
+	if (Test-Path -LiteralPath $Parameters.Path -PathType Container) { return }
+	$null = New-Item -Path $Parameters.Path -ItemType Directory -Force -ErrorAction Stop
 }
 
 $paramRegisterVMGuestAction = @{

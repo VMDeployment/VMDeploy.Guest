@@ -1,4 +1,23 @@
 ﻿function Test-VMGuestConfiguration {
+<#
+	.SYNOPSIS
+		Tests whether a given configuration entry has been successfully applied.
+	
+	.DESCRIPTION
+		Tests whether a given configuration entry has been successfully applied.
+	
+	.PARAMETER Identity
+		The identity of the configuration entry to test.
+		Defaults to '*'
+	
+	.PARAMETER Quiet
+		Do not return a result object, instead only return $true or $false
+	
+	.EXAMPLE
+		PS C:\> Test-VMGuestConfiguration
+	
+		Tests for each defined configuration entry, whether it has been successfully applied.
+#>
 	[CmdletBinding()]
 	param (
 		[Parameter(ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]

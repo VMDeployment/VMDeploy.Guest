@@ -14,7 +14,8 @@ Describe "Testing localization strings" {
 	$exceptions = & "$global:testroot\general\strings.Exceptions.ps1"
 	
 	foreach ($stringEntry in $stringsResults) {
-        if ($stringEntry.String -eq "key") { continue } # Skipping the template default entry
+		if ($stringEntry.String -in $exceptions.IgnoreString) { continue }
+		
         It "Should be used & have text: $($stringEntry.String)" -TestCases @{ stringEntry = $stringEntry } {
             if ($exceptions.LegalSurplus -notcontains $stringEntry.String) {
                 $stringEntry.Surplus | Should -BeFalse
