@@ -1,0 +1,82 @@
+﻿
+<#
+	.SYNOPSIS
+		Launcher script that should be added to the OS image as a scheduled task run on system boot.
+	
+	.DESCRIPTION
+		Launcher script that should be added to the OS image as a scheduled task run on system boot.
+		Note: Should probably be run as System with maximum privileges for most OS tasks.
+
+		This script will search all available volumes for a guest configuration package.
+		It expects the following folder structure within that volume at the root level:
+		
+		Modules\*
+		Actions\*
+		Config\*
+
+		Additional folders are ignored by this script.
+		It assumes that the modules folder contains all PowerShell modules needed for the VM Deployment's Guest Configuration workflow.
+		The folder will be added to PSModulePath with max priority for this workflow only.
+		The modules PSFramework and VMDeploy.Guest must be included in this folder at a minimum.
+
+		The "Actions" folder is designed for additional, customer specific, non-public VMGuest Actions.
+		You can define your own actions using Register-VMGuestAction.
+		Actions are the actual implementation logic performing to Guest configuration steps.
+
+		The "Config" folder is for the actual configuration files that define the intended post-deployment state.
+		
+		Running this script will have it register the volume root as a PSDrive named VMDeploy.
+		It will also set this path as the VMDeploy PSFPath, which will be available for path insertion in builtin actions.
+		This allows you for example to add another folder - let's call it "Install" - for your installation media and
+		then specify the path during a configuration for SCCM client install as "%VMDeploy%Install\sccm.client.setup.exe"
+
+		Note on volumes:
+		- The volume need not have a drive letter for being detected
+		- On PowerShell 7, a bug requires the volume to have a driveletter, but this task is designed with Windows PowerShell in mind anyway.
+	
+	.EXAMPLE
+		PS C:\> .\vmdeploy.ps1
+#>
+[CmdletBinding()]
+param ()
+
+#region Detect VMDeploy Volume
+$volumes = Get-Volume
+$volumeRoot = foreach ($volume in $volumes) {
+	if (-not (Test-Path -LiteralPath "$($volume.Path)Modules\VMDeploy.Guest")) { continue }
+	
+	if ($volume.DriveLetter) {
+		'{0}:\' -f $volume.DriveLetter
+		break
+	}
+	$volume.Path
+	break
+}
+#endregion Detect VMDeploy Volume
+
+#region Apply & Prepare paths for convenient use from PowerShell
+if (Get-PSDrive -Name VMDeploy -ErrorAction Ignore) { Remove-PSDrive -Name VMDeploy }
+$null = New-PSDrive -Name VMDeploy -PSProvider FileSystem -Root $volumeRoot -Scope Global
+
+$env:PSModulePath = "$($volumeRoot)Modules", $env:PSModulePath -join ";"
+Set-PSFPath -Name VMDeploy -Path $volumeRoot
+#endregion Apply & Prepare paths for convenient use from PowerShell
+
+# Load additional Action files
+foreach ($file in Get-ChildItem -Path "$($volumeRoot)Actions\*.ps1" -ErrorAction Ignore) {
+	& $file.FullName
+}
+# Load configuration files for the current client
+Import-VMGuestConfiguration -Path "$($volumeRoot)Config\*"
+
+# If Configuration successfull: Kill task as no longer needed
+$testResults = Test-VMGuestConfiguration
+if ($testResults.Success -notcontains $false) {
+	Invoke-PSFProtectedCommand -Action "VM Guest Configuration completed, cleaning up task" -Target "Scheduled Task" -ScriptBlock {
+		Unregister-ScheduledTask -TaskName VMDeployGuestConfig -ErrorAction Stop
+	} -EnableException $true -ErrorAction Stop
+	return
+}
+
+# Execute Guest Config
+Invoke-VMGuestConfiguration -Restart
