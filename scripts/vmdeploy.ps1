@@ -146,10 +146,11 @@ Import-VMGuestConfiguration -Path "$($vmdeployOSConfigLetter):\Config\*"
 # If Configuration successfull: Kill task as no longer needed
 $testResults = Test-VMGuestConfiguration
 if ($testResults.Success -notcontains $false) {
+	$schtaskResult = schtasks /delete /TN VMDeployGuestConfig /f
+	Write-PSFMessage -Message "schtasks:`n$($schtaskResult -join "`n")"
 	$null = "SELECT VOLUME $($vmdeployOSConfigLetter)", "REMOVE LETTER $($vmdeployOSConfigLetter)" | diskpart
-	Invoke-PSFProtectedCommand -Action "VM Guest Configuration completed, cleaning up task" -Target "Scheduled Task" -ScriptBlock {
-		Unregister-ScheduledTask -TaskName VMDeployGuestConfig -ErrorAction Stop
-	} -EnableException $true -ErrorAction Stop
+	Write-PSFMessage -Message "VMDeployment Guest Configuration Concluded"
+	Wait-PSFMessage
 	return
 }
 
@@ -157,3 +158,4 @@ if ($testResults.Success -notcontains $false) {
 Invoke-VMGuestConfiguration -Restart
 
 $null = "SELECT VOLUME $($vmdeployOSConfigLetter)", "REMOVE LETTER $($vmdeployOSConfigLetter)" | diskpart
+Wait-PSFMessage
