@@ -38,40 +38,115 @@
 		PS C:\> .\vmdeploy.ps1
 #>
 [CmdletBinding()]
-param ()
+param (
+	[ValidateRange(1, 63)]
+	[int]
+	$ConfigLun = 63,
+
+	[switch]
+	$EnableAllDisks
+)
+
+#region Functions
+function Write-LogEntry {
+	[CmdletBinding()]
+	param (
+		[string]
+		$LogName,
+			
+		[string]
+		$Source,
+			
+		[int]
+		$EventID,
+			
+		[int]
+		$Category,
+			
+		[System.Diagnostics.EventLogEntryType]
+		$Type,
+			
+		[object[]]
+		$Data
+	)
+	$id = New-Object System.Diagnostics.EventInstance($EventID, $Category, $Type)
+	$evtObject = New-Object System.Diagnostics.EventLog
+	$evtObject.Log = $LogName
+	$evtObject.Source = $Source
+	$evtObject.WriteEvent($id, $Data)
+}
+
+function Get-DiskLetters {
+	[CmdletBinding()]
+	param (
+		$VolumeObject
+	)
+
+	(Get-Volume).DriveLetter
+
+	$configRoot = "$($VolumeObject.Path)Config"
+	foreach ($file in Get-ChildItem -Path $configRoot -Recurse -Filter *.json) {
+		$config = Get-Content -LiteralPath $file.FullName | ConvertFrom-Json
+		if ($config.Action -ne 'disk') { continue }
+		$config.Parameters.Letter
+	}
+}
+#endregion Functions
 
 #region Detect VMDeploy Volume
+if ($EnableAllDisks) {
+	Get-Disk | Where-Object OperationalStatus -EQ 'Offline' | Set-Disk -IsOffline $false
+}
+else {
+	$disk = Get-Disk | Where-Object Location -Match "LUN $ConfigLun" | Where-Object OperationalStatus -EQ 'Offline'
+	if ($disk) { $disk | Set-Disk -IsOffline $false }
+}
+Start-Sleep -Seconds 1
 $volumes = Get-Volume
-$volumeRoot = foreach ($volume in $volumes) {
+$volumeObject = foreach ($volume in $volumes) {
 	if (-not (Test-Path -LiteralPath "$($volume.Path)Modules\VMDeploy.Guest")) { continue }
 	
-	if ($volume.DriveLetter) {
-		'{0}:\' -f $volume.DriveLetter
-		break
-	}
-	$volume.Path
+	$volume
 	break
 }
+
+if (-not $volumeObject) {
+	Write-LogEntry -LogName Application -Source Application -EventID 1 -Category 666 -Type Information -Data "No VMDeploy.Guest configuration volume detected. Assuming image used outside of the system, unregistering scheduled task"
+	Unregister-ScheduledTask -TaskName VMDeployGuestConfig -ErrorAction Stop
+	return
+}
+
+$diskLetters = Get-DiskLetters -VolumeObject $volumeObject
+foreach ($number in 122..97) {
+	if (([char]$number) -in $diskLetters) { continue }
+	$vmdeployOSConfigLetter = [char]$number
+	break
+}
+if ($volumeObject.DriveLetter) {
+	$null = "SELECT VOLUME $($volumeObject.DriveLetter)", "REMOVE LETTER $($volumeObject.DriveLetter)" | diskpart
+}
+$volumeObject | Get-Partition | Set-Partition -NewDriveLetter $vmdeployOSConfigLetter
 #endregion Detect VMDeploy Volume
 
 #region Apply & Prepare paths for convenient use from PowerShell
 if (Get-PSDrive -Name VMDeploy -ErrorAction Ignore) { Remove-PSDrive -Name VMDeploy }
-$null = New-PSDrive -Name VMDeploy -PSProvider FileSystem -Root $volumeRoot -Scope Global
+$null = New-PSDrive -Name VMDeploy -PSProvider FileSystem -Root "$($vmdeployOSConfigLetter):\" -Scope Global
 
-$env:PSModulePath = "$($volumeRoot)Modules", $env:PSModulePath -join ";"
-Set-PSFPath -Name VMDeploy -Path $volumeRoot
+$env:PSModulePath = "$($vmdeployOSConfigLetter):\Modules", $env:PSModulePath -join ";"
+Set-PSFPath -Name VMDeploy -Path "$($vmdeployOSConfigLetter):\"
 #endregion Apply & Prepare paths for convenient use from PowerShell
 
 # Load additional Action files
-foreach ($file in Get-ChildItem -Path "$($volumeRoot)Actions\*.ps1" -ErrorAction Ignore) {
+foreach ($file in Get-ChildItem -Path "$($vmdeployOSConfigLetter):\Actions\*.ps1" -ErrorAction Ignore) {
 	& $file.FullName
 }
 # Load configuration files for the current client
-Import-VMGuestConfiguration -Path "$($volumeRoot)Config\*"
+Import-VMGuestConfiguration -Path "$($vmdeployOSConfigLetter):\Config\*"
 
 # If Configuration successfull: Kill task as no longer needed
 $testResults = Test-VMGuestConfiguration
 if ($testResults.Success -notcontains $false) {
+	$null = "SELECT VOLUME $($vmdeployOSConfigLetter)", "REMOVE LETTER $($vmdeployOSConfigLetter)" | diskpart
 	Invoke-PSFProtectedCommand -Action "VM Guest Configuration completed, cleaning up task" -Target "Scheduled Task" -ScriptBlock {
 		Unregister-ScheduledTask -TaskName VMDeployGuestConfig -ErrorAction Stop
 	} -EnableException $true -ErrorAction Stop
@@ -80,3 +155,5 @@ if ($testResults.Success -notcontains $false) {
 
 # Execute Guest Config
 Invoke-VMGuestConfiguration -Restart
+
+$null = "SELECT VOLUME $($vmdeployOSConfigLetter)", "REMOVE LETTER $($vmdeployOSConfigLetter)" | diskpart

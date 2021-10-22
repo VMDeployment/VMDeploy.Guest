@@ -25,6 +25,10 @@
 	.PARAMETER Description
 		A description text, explaining how the action works.
 		Use this as a summary, orientation help and manual for using the action.
+
+	.PARAMETER PreDeploymentCode
+		Scriptblock that is executed within the VMDeployment JEA endpoint before the Virtual Machine creation is triggered.
+		This allows executing code in the context of the JEA gMSA and dynamically preparing resources to be included in the deployment.
 	
 	.PARAMETER ParameterMandatory
 		List of parameters that MUST be specified when defining an action configuration.
@@ -59,6 +63,10 @@
 		[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
 		[string]
 		$Description,
+
+		[Parameter(ValueFromPipelineByPropertyName = $true)]
+		[scriptblock]
+		$PreDeploymentCode,
 		
 		[Parameter(ValueFromPipelineByPropertyName = $true)]
 		[string[]]
@@ -80,6 +88,7 @@
 			ScriptBlock	       = $ScriptBlock
 			Validate		   = $Validate
 			Description	       = $Description
+			PreDeploymentCode  = $PreDeploymentCode
 			ParameterMandatory = $ParameterMandatory
 			ParameterOptional  = $ParameterOptional
 			Tag			       = $Tag

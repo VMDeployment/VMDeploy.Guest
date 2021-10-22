@@ -109,6 +109,6 @@
 		
 		Set-PSFConfig -FullName 'VMDeploy.Guest.Invoke.CurrentRetryCount' -Value ($currentInvokeCount + 1)
 		Export-PSFConfig -ModuleName 'VMDeploy.Guest' -ModuleVersion 1
-		if ($Restart) { Restart-Computer }
+		if ($Restart) { Restart-Computer -Confirm:$false -Force }
 	}
 }

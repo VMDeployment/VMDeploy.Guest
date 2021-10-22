@@ -94,7 +94,7 @@
 			$result = [pscustomobject]@{
 				Success = $true
 				MandatoryMissing = $actionObject.ParameterMandatory | Where-Object { $_ -notin $Parameters.Keys }
-				UnknownParameters = $Parameters.Keys | Where-Object { $_ -notin $actionObject.ParameterMandatory -and $actionObject.ParameterOptional }
+				UnknownParameters = $Parameters.Keys | Where-Object { $_ -notin $actionObject.ParameterMandatory -and $_ -notin $actionObject.ParameterOptional }
 			}
 			if ($result.MandatoryMissing -or $result.UnknownParameters) { $result.Success = $false }
 			$result
