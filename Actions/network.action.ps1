@@ -87,7 +87,7 @@ $param = @{
 		'IPAddress'
 		'DefaultGateway'
 		'DnsServer'
-		'SubnetMask'
+		'PrefixLength'
 	)
 	Tag                = 'network'
 }

@@ -5,7 +5,7 @@
 
 	$disk = Get-Disk | Where-Object Location -Match "LUN $($Configuration.Lun)$"
 	if (-not $disk) {
-		Write-PSFMessage -Level Warning -Message 'Error configuring volume {1} (LUN ID {0}): Disk not found, validate VM deployment!' -StringValues $Configuration.Lun, $Configuration.Letter -Data $Configuration -Target $Configuration.Letter
+		Write-PSFMessage -Level Warning -Message 'Error configuring volume {1} (LUN ID {0}): Disk not found, validate VM deployment!' -StringValues $Configuration.Lun, $Configuration.Letter -Data $Configuration -Target $Configuration.Letter -ModuleName 'VMDeploy.Guest'
 		return
 	}
 
@@ -40,7 +40,7 @@ $validationCode = {
 
 	$disk = Get-Disk | Where-Object Location -Match "LUN $($Configuration.Lun)$"
 	if (-not $disk) {
-		Write-PSFMessage -Level Warning -Message 'Error configuring volume {1} (LUN ID {0}): Disk not found, validate VM deployment!' -StringValues $Configuration.Lun, $Configuration.Letter -Data $Configuration -Target $Configuration.Letter
+		Write-PSFMessage -Level Warning -Message 'Error configuring volume {1} (LUN ID {0}): Disk not found, validate VM deployment!' -StringValues $Configuration.Lun, $Configuration.Letter -Data $Configuration -Target $Configuration.Letter -ModuleName 'VMDeploy.Guest'
 		return $false
 	}
 
