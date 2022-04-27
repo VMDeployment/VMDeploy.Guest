@@ -43,12 +43,22 @@
 			
 			#region Action Missing
 			if (-not $script:actions[$configuration.Action]) {
-				$result.TypeNames = 'Missing Action'
+				$result.Type = 'Missing Action'
 				if ($Quiet) { $result.Success }
 				else { $result }
 				continue
 			}
 			#endregion Action Missing
+
+			#region Persistence
+			if (Test-VMGuestPersistentSuccess -Identity $configuration.Identity -Persistent $configuration.Persistent) {
+				$result.Type = 'Success (Persisted)'
+				$result.Success = $true
+				if ($Quiet) { $result.Success }
+				else { $result }
+				continue
+			}
+			#endregion Persistence
 			
 			#region Process Validation Script
 			try {
@@ -67,6 +77,7 @@
 			$result.Success = $validateResult
 			if ($validateResult) {
 				$result.Type = 'Success'
+				Set-VMGuestPersistentSuccess -Identity $configuration.Identity -Value $true
 			}
 			else {
 				$result.Type = 'Not Completed'

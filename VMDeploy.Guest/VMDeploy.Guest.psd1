@@ -40,15 +40,20 @@
 	
 	# Functions to export from this module
 	FunctionsToExport = @(
-		'Clear-VMGuestConfiguration'
 		'Get-VMGuestAction'
+		'Register-VMGuestAction'
+		'Unregister-VMGuestAction'
+
+		'Clear-VMGuestConfiguration'
 		'Get-VMGuestConfiguration'
 		'Import-VMGuestConfiguration'
 		'Invoke-VMGuestConfiguration'
-		'Register-VMGuestAction'
 		'Register-VMGuestConfiguration'
 		'Test-VMGuestConfiguration'
-		'Unregister-VMGuestAction'
+
+		'Get-VMGuestPersistentSuccess'
+		'Set-VMGuestPersistentSuccess'
+		'Test-VMGuestPersistentSuccess'
 	)
 	
 	# List of all modules packaged with this module

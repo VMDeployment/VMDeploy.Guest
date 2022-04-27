@@ -29,6 +29,11 @@
 		Other configuration entries that must have been applied before this configuration entry can be executed.
 		For example, imagine a configuration entry that wants to ensure all updates provided via SCCM have been installed:
 		That example configuration could not possibly succeed before the SCCM client has been installed and configured.
+
+	.PARAMETER Persistent
+		Whether the action once tested successfully should keep being flagged as successful in the future.
+		This means later changes to the environment cannot affect the results anymore.
+		Defaults to: $true
 	
 	.PARAMETER Source
 		Documentation only.
@@ -67,6 +72,10 @@
 		[Parameter(ValueFromPipelineByPropertyName = $true)]
 		[string[]]
 		$DependsOn = @(),
+
+		[Parameter(ValueFromPipelineByPropertyName = $true)]
+		[bool]
+		$Persistent = $true,
 		
 		[Parameter(ValueFromPipelineByPropertyName = $true)]
 		[string]
@@ -114,6 +123,7 @@
 			Action	   = $Action
 			Parameters = $Parameters
 			DependsOn  = $DependsOn
+			Persistent = $Persistent
 			Source	   = $Source
 		}
 	}
