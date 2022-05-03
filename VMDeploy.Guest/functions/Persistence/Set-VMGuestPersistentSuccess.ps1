@@ -20,6 +20,7 @@
 		
 		Sets the specified configuration item as completed successfully.
 	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '')]
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
