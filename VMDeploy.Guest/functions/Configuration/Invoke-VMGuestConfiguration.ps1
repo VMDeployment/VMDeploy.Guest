@@ -69,7 +69,7 @@
 		
 		$configurations = Get-VMGuestConfiguration | Sort-Object Weight, Identity
 		Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Processing.Starting'
-		foreach ($configuration in $configurations) {
+		:main foreach ($configuration in $configurations) {
 			#region Check Prerequisites
 			Write-PSFMessage -Level Host -String 'Invoke-VMGuestConfiguration.Configuration.Processing' -StringValues $configuration.Identity, $configuration.Action -Target $configuration
 			if ($currentState[$configuration.Identity]) {
@@ -85,7 +85,7 @@
 			foreach ($dependency in $configuration.DependsOn) {
 				if (-not $currentState[$dependency]) {
 					Write-PSFMessage -Level Warning -String 'Invoke-VMGuestConfiguration.Configuration.DependencyNotDone' -StringValues $configuration.Identity, $configuration.Action, $dependency -Target $configuration
-					continue
+					continue main
 				}
 			}
 			#endregion Check Prerequisites
