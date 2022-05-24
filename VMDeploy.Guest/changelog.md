@@ -4,6 +4,7 @@
 
 + Upd: Action: Certificate - added CertRoles & RDP configuration
 + Upd: Action: ComputerName - disabled interactive user prompts
++ Upd: Action: firewall - updated/restructured filtering
 + Fix: Action: policy_clear - fixed broken validation for local machine policy (will get filled automatically)
 
 ## 1.0.0 (2021-04-07)

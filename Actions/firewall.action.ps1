@@ -8,8 +8,8 @@
 	$param = @{ PolicyStore = 'Localhost' }
 
 	foreach ($property in $properties) {
-		if (-not $Configuration.$property) { continue }
-		if ($fwConfig.$property -eq $Configuration.$property) { continue }
+		if ($Configuration.PSObject.Properties.Name -notcontains $property) { continue }
+		if ($Configuration.$property -eq $fwConfig.$property) { continue }
 		$param.$property = $Configuration.$property
 	}
 
@@ -25,8 +25,8 @@ $validationCode = {
 	$fwConfig = Get-NetFirewallSetting
 
 	foreach ($property in $properties) {
-		if (-not $Configuration.$property) { continue }
-		if ($fwConfig.$property -eq $Configuration.$property) { continue }
+		if ($Configuration.PSObject.Properties.Name -notcontains $property) { continue }
+		if ($Configuration.$property -eq $fwConfig.$property) { continue }
 		return $false
 	}
 	$true
