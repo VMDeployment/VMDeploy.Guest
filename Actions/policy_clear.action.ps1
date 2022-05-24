@@ -45,10 +45,6 @@ $validationCode = {
 		$allIsWell = $false
 		Write-PSFMessage -Message 'Local User Policies found' @msgCommon
 	}
-	if (Get-Item "$env:WinDir\System32\GroupPolicy\*" -Force -ErrorAction Ignore) {
-		$allIsWell = $false
-		Write-PSFMessage -Message 'Local System Policies found' @msgCommon
-	}
 
 	if (Get-NetIPsecMainModeCryptoSet -PolicyStore 'localhost') {
 		$allIsWell = $false

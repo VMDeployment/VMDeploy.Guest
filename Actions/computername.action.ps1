@@ -3,7 +3,7 @@
 		$Configuration
 	)
 
-	Rename-Computer -NewName $Configuration.Name -ErrorAction Stop -WarningAction SilentlyContinue
+	Rename-Computer -NewName $Configuration.Name -ErrorAction Stop -WarningAction SilentlyContinue -Force -Confirm:$false
 }
 
 $validationCode = {

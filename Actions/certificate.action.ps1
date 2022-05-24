@@ -9,6 +9,16 @@
 		Password          = ("DoesNotMatter" | ConvertTo-SecureString -AsPlainText -Force)
 	}
 	Import-PfxCertificate @param
+
+	$certPath = (Get-Item -Path "VMDeploy:\Resources\__cert_$($Configuration.Name).pfx").FullName
+	$certObject = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($certPath, "DoesNotMatter")
+
+	switch ($Configuration.CertRoles) {
+		'RDP' {
+			$instance = Get-CimInstance -Namespace root\cimv2\TerminalServices -ClassName Win32_TSGeneralSetting -Filter 'TerminalName = "RDP-TCP"'
+			$instance | Set-CimInstance -Property @{ SSLCertificateSHA1Hash = $certObject.Thumbprint }
+		}
+	}
 }
 
 $validationCode = {
@@ -20,7 +30,18 @@ $validationCode = {
 	$certPath = (Get-Item -Path "VMDeploy:\Resources\__cert_$($Configuration.Name).pfx").FullName
 	$certObject = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($certPath, "DoesNotMatter")
 
-	Test-Path -Path "Cert:\LocalMachine\My\$($certObject.Thumbprint)"
+	if (-not (Test-Path -Path "Cert:\LocalMachine\My\$($certObject.Thumbprint)")) {
+		return $false
+	}
+
+	switch ($Configuration.CertRoles) {
+		'RDP' {
+			$instance = Get-CimInstance -Namespace root\cimv2\TerminalServices -ClassName Win32_TSGeneralSetting -Filter 'TerminalName = "RDP-TCP"'
+			if ($instance.SSLCertificateSHA1Hash -ne $certObject.Thumbprint) { return $false }
+		}
+	}
+
+	$true
 }
 
 $PreDeploymentCode = {
@@ -220,6 +241,8 @@ $param = @{
 	)
 	ParameterOptional  = @(
 		'Fqdn' # Prompted if not configured
+		'CertRoles' # Determines other execution logic to apply to the certificate after installation.
+					# Supported Roles: RDP
 	)
 	Tag                = 'certificate', 'pki'
 }
