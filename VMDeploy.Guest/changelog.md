@@ -2,6 +2,7 @@
 
 ## ???
 
++ New: Action: ScriptBlock - execute a custom scriptblock
 + Upd: Action: Certificate - added CertRoles & RDP configuration
 + Upd: Action: ComputerName - disabled interactive user prompts
 + Upd: Action: firewall - updated/restructured filtering
