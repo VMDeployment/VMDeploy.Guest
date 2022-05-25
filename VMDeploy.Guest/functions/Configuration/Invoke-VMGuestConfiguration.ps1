@@ -61,7 +61,7 @@
 		Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Test.Starting'
 		foreach ($configuration in Get-VMGuestConfiguration) {
 			Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Configuration.Testing' -StringValues $configuration.Identity, $configuration.Action -Target $configuration
-			$currentState[$configuration.Identity] = Test-VMGuestConfiguration -Identity $configuration.Identity -Quiet
+			$currentState[$configuration.Identity] = Test-VMGuestConfiguration -Identity $configuration.Identity -Quiet -NoPersistence
 			Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Configuration.Testing.Completed' -StringValues $configuration.Identity, $configuration.Action, $currentState[$configuration.Identity] -Target $configuration
 		}
 		Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Test.Completed'
@@ -109,6 +109,8 @@
 		
 		Set-PSFConfig -FullName 'VMDeploy.Guest.Invoke.CurrentRetryCount' -Value ($currentInvokeCount + 1)
 		Export-PSFConfig -ModuleName 'VMDeploy.Guest' -ModuleVersion 1
+		# Ensure all messages are flushed to log
+		Wait-PSFMessage
 		if ($Restart) { Restart-Computer -Confirm:$false -Force }
 	}
 }

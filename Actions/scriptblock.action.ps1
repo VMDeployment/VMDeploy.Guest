@@ -29,9 +29,9 @@ $param = @{
 	Description        = 'Executes a ScriptBlock'
 	ParameterMandatory = @(
 		'ScriptBlock'
-		'Parameters'
 	)
 	ParameterOptional = @(
+		'Parameters'
 	)
 	Tag                = 'code'
 }

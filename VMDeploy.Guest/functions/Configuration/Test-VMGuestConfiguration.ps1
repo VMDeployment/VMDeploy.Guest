@@ -12,6 +12,10 @@
 	
 	.PARAMETER Quiet
 		Do not return a result object, instead only return $true or $false
+
+	.PARAMETER NoPersistence
+		Do not persistently flag this configuration as successful.
+		Used to avoid permanently flagging a guest configuration as successful, before its dependencies have been completed.
 	
 	.EXAMPLE
 		PS C:\> Test-VMGuestConfiguration
@@ -26,7 +30,10 @@
 		$Identity = '*',
 		
 		[switch]
-		$Quiet
+		$Quiet,
+
+		[switch]
+		$NoPersistence
 	)
 	
 	process {
@@ -77,7 +84,9 @@
 			$result.Success = $validateResult
 			if ($validateResult) {
 				$result.Type = 'Success'
-				Set-VMGuestPersistentSuccess -Identity $configuration.Identity -Value $true
+				if (-not $NoPersistence) {
+					Set-VMGuestPersistentSuccess -Identity $configuration.Identity -Value $true
+				}
 			}
 			else {
 				$result.Type = 'Not Completed'
