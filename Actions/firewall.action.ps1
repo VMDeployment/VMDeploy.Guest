@@ -4,7 +4,7 @@
 	)
 
 	$properties = 'Exemptions','EnableStatefulFtp','EnableStatefulPptp','ActiveProfile','RemoteMachineTransportAuthorizationList','RemoteMachineTunnelAuthorizationList','RemoteUserTransportAuthorizationList','RemoteUserTunnelAuthorizationList','RequireFullAuthSupport','CertValidationLevel','AllowIPsecThroughNAT','MaxSAIdleTimeSeconds','KeyEncoding','EnablePacketQueuing'
-	$fwConfig = Get-NetFirewallSetting
+	$fwConfig = Get-NetFirewallSetting -PolicyStore Localhost
 	$param = @{ PolicyStore = 'Localhost' }
 
 	foreach ($property in $properties) {
@@ -22,7 +22,7 @@ $validationCode = {
 	)
 
 	$properties = 'Exemptions','EnableStatefulFtp','EnableStatefulPptp','ActiveProfile','RemoteMachineTransportAuthorizationList','RemoteMachineTunnelAuthorizationList','RemoteUserTransportAuthorizationList','RemoteUserTunnelAuthorizationList','RequireFullAuthSupport','CertValidationLevel','AllowIPsecThroughNAT','MaxSAIdleTimeSeconds','KeyEncoding','EnablePacketQueuing'
-	$fwConfig = Get-NetFirewallSetting
+	$fwConfig = Get-NetFirewallSetting -PolicyStore Localhost
 
 	foreach ($property in $properties) {
 		if ($Configuration.Keys -notcontains $property) { continue }

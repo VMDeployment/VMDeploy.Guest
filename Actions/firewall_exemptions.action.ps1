@@ -11,7 +11,7 @@ $validationCode = {
 		$Configuration
 	)
 
-	$fwConfig = Get-NetFirewallSetting
+	$fwConfig = Get-NetFirewallSetting -PolicyStore Localhost
 	$Configuration.Exemptions -eq $fwConfig.Exemptions
 }
 
