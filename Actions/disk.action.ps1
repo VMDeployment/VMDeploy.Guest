@@ -31,6 +31,49 @@
 	if ($Configuration.Label -and $Configuration.Label -ne $volume.FileSystemLabel) {
 		$volume | Set-Volume -NewFileSystemLabel $Configuration.Label -ErrorAction Stop
 	}
+
+	#region BitLocker
+	$protectionMode = 'Ignore'
+	if ($Configuration.BitLocker) { $protectionMode = $Configuration.BitLocker }
+	if ('Ignore' -eq $protectionMode) { return $true }
+
+	if ($invalidOptions = $protectionMode | Where-Object { $_ -notin 'Ignore', 'None', 'Tpm', 'RecoveryPassword' }) {
+		Write-PSFMessage -Level Warning -Message "Volume $($Configuration.Letter) has invalid bitlocker configuration: Unknown options $($invalidOptions -join ',')"
+		return
+	}
+
+	$bitLockerInfo = Get-BitLockerVolume -MountPoint "$($Configuration.Letter):" -ErrorAction Ignore
+	if ('None' -eq $protectionMode) {
+		if ('Off' -eq $bitLockerInfo.ProtectionStatus) { return }
+		Write-PSFMessage -Level Warning -Message "Volume $($Configuration.Letter) is configured to be unencrypted but is protected by BitLocker. Drive decryption has not been implemented yet!"
+		return
+	}
+
+	if ('Off' -eq $bitLockerInfo.ProtectionStatus) {
+		$param = @{ RecoveryPasswordProtector = $true }
+		if ($protectionMode -contains 'Tpm') { $param = @{ TpmProtector = $true } }
+
+		$null = Enable-BitLocker -MountPoint "$($Configuration.Letter):" @param -Confirm:$false
+	}
+
+	$bitLockerInfo = Get-BitLockerVolume -MountPoint "$($Configuration.Letter):" -ErrorAction Ignore
+	if ($protectionMode -contains 'Tpm' -and $bitLockerInfo.KeyProtector.KeyProtectorType -notcontains 'Tpm') {
+		$null = Add-BitLockerKeyProtector -MountPoint "$($Configuration.Letter):" -TpmProtector -Confirm:$false
+	}
+	if ($protectionMode -contains 'RecoveryPassword' -and $bitLockerInfo.KeyProtector.KeyProtectorType -notcontains 'RecoveryPassword') {
+		$null = Add-BitLockerKeyProtector -MountPoint "$($Configuration.Letter):" -RecoveryPasswordProtector -Confirm:$false
+	}
+
+	$keyPath = $Configuration.BitLockerKeyPath -replace '%COMPUTERNAME%', $env:COMPUTERNAME
+	if (-not $keyPath) { return }
+
+	$bitLockerInfo = Get-BitLockerVolume -MountPoint "$($Configuration.Letter):" -ErrorAction Ignore
+	$keyFileContent = Get-Content -Path $keyPath
+	$recoveryPassword = $bitLockerInfo.KeyProtector.RecoveryPassword | Remove-PSFNull
+	$hasKey = ($keyFileContent -match $recoveryPassword) -as [bool]
+	if ($hasKey) { return }
+	"{0}: {1}" -f $Configuration.Letter, $recoveryPassword | Add-Content -Path $keyPath
+	#endregion BitLocker
 }
 
 $validationCode = {
@@ -51,6 +94,45 @@ $validationCode = {
 	if ($Configuration.Label -and $Configuration.Label -ne $volume.FileSystemLabel) {
 		return $false
 	}
+
+	#region Bitlocker
+	$protectionMode = 'Ignore'
+	if ($Configuration.BitLocker) { $protectionMode = $Configuration.BitLocker }
+	# If we don't care, just skip
+	if ('Ignore' -eq $protectionMode) { return $true }
+
+	# Short way out if the file doesn't exist yet
+	$keyPath = $Configuration.BitLockerKeyPath -replace '%COMPUTERNAME%', $env:COMPUTERNAME
+	if ($keyPath -and -not (Test-Path -Path $keyPath)) { return $false }
+
+	$protectionStatus = (Get-BitLockerVolume -MountPoint "$($Configuration.Letter):" -ErrorAction Ignore).ProtectionStatus
+	if ('On' -ne $protectionStatus) { return $protectionMode -eq 'None' }
+	
+	foreach ($option in $protectionMode) {
+		$protector = (Get-BitLockerVolume -MountPoint "$($Configuration.Letter):" -ErrorAction Ignore).KeyProtector | Where-Object KeyProtectorType -EQ $option
+		if (-not $protector) {
+			Write-PSFMessage "Protector not found: $option"
+			return $false
+		}
+
+		switch ("$($protector.KeyProtectorType)") {
+			'Tpm' {
+				# No fail condition - if it is set, that is ok
+				break
+			}
+			'RecoveryPassword' {
+				if (-not $keyPath) { break }
+				$keyFileContent = Get-Content -Path $keyPath
+				$hasKey = ($keyFileContent -match $protector.RecoveryPassword) -as [bool]
+				if (-not $hasKey) { return $false }
+			}
+			default {
+				Write-PSFMessage -Level Warning -Message "Invalid Key Protector type! $option is not supported, provide either Tpm or RecoveryPassword protectors!"
+				return $false
+			}
+		}
+	}
+	#endregion Bitlocker
 	$true
 }
 
@@ -63,9 +145,11 @@ $param = @{
 		'Lun'
 		'Letter'
 	)
-	ParameterOptional = @(
+	ParameterOptional  = @(
 		'Label'
 		'Size'
+		'BitLocker' # How should the disk be encrypted? Ignore, None, Tpm, RecoveryPassword (Can combine Tpm and RecoveryPassword)
+		'BitLockerKeyPath' # Path to where a recovery key protector will be written
 	)
 	Tag                = 'volume', 'disk'
 }
