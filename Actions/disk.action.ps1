@@ -53,15 +53,21 @@
 		$param = @{ RecoveryPasswordProtector = $true }
 		if ($protectionMode -contains 'Tpm') { $param = @{ TpmProtector = $true } }
 
-		$null = Enable-BitLocker -MountPoint "$($Configuration.Letter):" @param -Confirm:$false
+		$null = Enable-BitLocker -MountPoint "$($Configuration.Letter):" @param -Confirm:$false -ErrorAction Stop
 	}
 
 	$bitLockerInfo = Get-BitLockerVolume -MountPoint "$($Configuration.Letter):" -ErrorAction Ignore
 	if ($protectionMode -contains 'Tpm' -and $bitLockerInfo.KeyProtector.KeyProtectorType -notcontains 'Tpm') {
-		$null = Add-BitLockerKeyProtector -MountPoint "$($Configuration.Letter):" -TpmProtector -Confirm:$false
+		$null = Add-BitLockerKeyProtector -MountPoint "$($Configuration.Letter):" -TpmProtector -Confirm:$false -ErrorAction Stop
 	}
 	if ($protectionMode -contains 'RecoveryPassword' -and $bitLockerInfo.KeyProtector.KeyProtectorType -notcontains 'RecoveryPassword') {
-		$null = Add-BitLockerKeyProtector -MountPoint "$($Configuration.Letter):" -RecoveryPasswordProtector -Confirm:$false
+		$null = Add-BitLockerKeyProtector -MountPoint "$($Configuration.Letter):" -RecoveryPasswordProtector -Confirm:$false -ErrorAction Stop
+	}
+
+	# For secondary drives, autounlock
+	$bitLockerInfo = Get-BitLockerVolume -MountPoint "$($Configuration.Letter):" -ErrorAction Ignore
+	if ($null -ne $bitLockerInfo.AutoUnlockEnabled -and -not $bitLockerInfo.AutoUnlockEnabled) {
+		Enable-BitLockerAutoUnlock -MountPoint "$($Configuration.Letter):" -ErrorAction Stop
 	}
 
 	$keyPath = $Configuration.BitLockerKeyPath -replace '%COMPUTERNAME%', $env:COMPUTERNAME
