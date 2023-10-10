@@ -2,6 +2,7 @@
 
 ## ???
 
++ New: Action: CertDeploy - deploy a certificate (such as a root CA cert) to a selected certificate store
 + New: Action: ScriptBlock - execute a custom scriptblock
 + Upd: Action: Certificate - added CertRoles & RDP configuration
 + Upd: Action: ComputerName - disabled interactive user prompts
