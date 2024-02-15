@@ -9,7 +9,18 @@
 		return
 	}
 	$fullFilePath = (Get-Item -Path $filePath).FullName
-	try { $certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromCertFile($fullFilePath) }
+	$fullPWFilePath = "$($fullFilePath)_password"
+	$password = ''
+	if (Test-Path -LiteralPath $fullPWFilePath) { $password = Get-Content -LiteralPath $fullPWFilePath }
+	try {
+		if (-not $password) {
+			$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromCertFile($fullFilePath)
+		}
+		else {
+			$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new()
+			$certificate.Import($filePath, $password, 'MachineKeySet')
+		}
+	}
 	catch {
 		Write-PSFMessage -Level Warning -Message "Error opening certificate $($Configuration.FileName)" -ErrorRecord $_
 		return
@@ -45,7 +56,18 @@ $validationCode = {
 		return $false
 	}
 	$fullFilePath = (Get-Item -Path $filePath).FullName
-	try { $certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromCertFile($fullFilePath) }
+	$fullPWFilePath = "$($fullFilePath)_password"
+	$password = ''
+	if (Test-Path -LiteralPath $fullPWFilePath) { $password = Get-Content -LiteralPath $fullPWFilePath }
+	try {
+		if (-not $password) {
+			$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromCertFile($fullFilePath)
+		}
+		else {
+			$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new()
+			$certificate.Import($filePath, $Configuration.Password, 'MachineKeySet')
+		}
+	}
 	catch {
 		Write-PSFMessage -Level Warning -Message "Error opening certificate $($Configuration.FileName)" -ErrorRecord $_
 		return $false
@@ -62,7 +84,12 @@ $validationCode = {
 		Write-PSFMessage -Level Warning -Message "Error accessing certificate store $($Configuration.Store)" -ErrorRecord $_
 		return $false
 	}
-	$store.Certificates.ThumbPrint -contains $certificate.ThumbPrint
+	
+	$result = $store.Certificates.ThumbPrint -contains $certificate.ThumbPrint
+	if ($result) {
+		Remove-Item -LiteralPath $fullPWFilePath
+	}
+	$result
 }
 
 $PreDeploymentCode = {
@@ -71,6 +98,25 @@ $PreDeploymentCode = {
 
 		$WorkingDirectory
 	)
+
+	$certPath = "$WorkingDirectory\Resources\$($Configuration.FileName)"
+	if (-not (Test-Path -Path $certPath)) {
+		throw "Certificate not found! $($Configuration.FileName)"
+	}
+
+	if ($Configuration.FileName -notmatch '\.pfx$') { return }
+	
+	$securePassword = Read-Host "Specify password for certificate $($Configuration.FileName)" -AsSecureString
+	$password = [PSCredential]::new("Whatever", $securePassword).GetNetworkCredential().Password
+
+	$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new()
+	try { $certificate.Import($Configuration.FileName, $password, 'EphemeralKeySet') }
+	catch {
+		throw "Password does not match Certificate"
+	}
+
+	$certPasswordPath = "$($certPath)_password"
+	$password | Set-Content -Path $certPasswordPath
 }
 
 $param = @{
@@ -83,7 +129,7 @@ $param = @{
 		'FileName'
 		'Store'
 	)
-	ParameterOptional = @(
+	ParameterOptional  = @(
 	)
 	Tag                = 'certificate', 'pki'
 }
