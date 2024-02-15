@@ -86,7 +86,7 @@ $validationCode = {
 	}
 	
 	$result = $store.Certificates.ThumbPrint -contains $certificate.ThumbPrint
-	if ($result) {
+	if ($result -and (Test-Path -LiteralPath $fullPWFilePath)) {
 		Remove-Item -LiteralPath $fullPWFilePath
 	}
 	$result

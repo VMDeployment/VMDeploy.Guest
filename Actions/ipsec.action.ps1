@@ -59,6 +59,19 @@
 	
 		)
 	
+		begin {
+			# Remove local IP Address from remote addresses (if any)
+			# Including a local IP Address on a remote address for IPSec Rules is going to break networking
+			$localIPAddresses = [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces().GetIPProperties().UnicastAddresses.ForEach{$_.Address}.IPAddressToString
+			$actualRemoteAddresses = $RemoteAddress | Where-Object { $_ -notin $localIPAddresses }
+			if (-not $actualRemoteAddresses) {
+				Write-PSFMessage -Level Warning -Message "No valid remote addresses remaining: $($RemoteAddress -join ',') were only local addresses!" -Data @{
+					Remote = $RemoteAddress -join ','
+					LocalIP = $localIPAddresses -join ','
+				}
+				throw "No valid remote addresses remaining: $($RemoteAddress -join ',') were only local addresses!"
+			}
+		}
 		process {
 			$certProposal = New-NetIPsecAuthProposal -Machine -Cert -Authority $Authority -AuthorityType "root" -Signing RSA -ErrorAction SilentlyContinue
 			$certAuthSet = New-NetIPsecPhase1AuthSet -PolicyStore 'localhost' -DisplayName $DisplayName -Proposal $certProposal -ErrorAction Stop
