@@ -110,9 +110,9 @@ $PreDeploymentCode = {
 	$password = [PSCredential]::new("Whatever", $securePassword).GetNetworkCredential().Password
 
 	$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new()
-	try { $certificate.Import($Configuration.FileName, $password, 'EphemeralKeySet') }
+	try { $certificate.Import($certPath, $password, 'EphemeralKeySet') }
 	catch {
-		throw "Password does not match Certificate"
+		throw "Password does not match Certificate: $_"
 	}
 
 	$certPasswordPath = "$($certPath)_password"

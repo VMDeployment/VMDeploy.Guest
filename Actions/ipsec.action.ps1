@@ -75,7 +75,7 @@
 		process {
 			$certProposal = New-NetIPsecAuthProposal -Machine -Cert -Authority $Authority -AuthorityType "root" -Signing RSA -ErrorAction SilentlyContinue
 			$certAuthSet = New-NetIPsecPhase1AuthSet -PolicyStore 'localhost' -DisplayName $DisplayName -Proposal $certProposal -ErrorAction Stop
-			New-NetIPsecRule -PolicyStore 'localhost' -DisplayName $DisplayName -Name $DisplayName -InboundSecurity $Security -OutboundSecurity $Security -Phase1AuthSet $certAuthSet.Name -Mode Transport -LocalAddress $LocalAddress -RemoteAddress $RemoteAddress -Phase2AuthSet None -Protocol $Protocol -RemotePort $RemotePort -LocalPort $LocalPort -Enabled $Enabled 
+			New-NetIPsecRule -PolicyStore 'localhost' -DisplayName $DisplayName -Name $DisplayName -InboundSecurity $Security -OutboundSecurity $Security -Phase1AuthSet $certAuthSet.Name -Mode Transport -LocalAddress $LocalAddress -RemoteAddress $actualRemoteAddresses -Phase2AuthSet None -Protocol $Protocol -RemotePort $RemotePort -LocalPort $LocalPort -Enabled $Enabled 
 		}
 	}
 	#endregion Functions
