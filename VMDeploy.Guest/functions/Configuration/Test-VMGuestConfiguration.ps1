@@ -69,7 +69,7 @@
 			
 			#region Process Validation Script
 			try {
-				$validateResult = $script:actions[$configuration.Action].Validate.Invoke($configuration.Parameters) | Where-Object {
+				$validateResult = & $script:actions[$configuration.Action].Validate $configuration.Parameters | Where-Object {
 					$_ -is [bool]
 				} | Select-Object -Last 1
 			}

@@ -71,6 +71,7 @@
 				}
 				throw "No valid remote addresses remaining: $($RemoteAddress -join ',') were only local addresses!"
 			}
+			Write-PSFMessage -Level Debug -Message "Remote addresses for rule '{0}': {1}" -StringValues $DisplayName, ($actualRemoteAddresses -join ',') -Tag remoteaddresses
 		}
 		process {
 			$certProposal = New-NetIPsecAuthProposal -Machine -Cert -Authority $Authority -AuthorityType "root" -Signing RSA -ErrorAction SilentlyContinue
@@ -81,6 +82,10 @@
 	#endregion Functions
 
 	Set-IPSecRule @Configuration
+
+	# Enforce Policy Application
+	$null = gpupdate
+	Restart-Service ikeext
 }
 
 $validationCode = {

@@ -3,6 +3,9 @@
 		$Configuration
 	)
 
+	$driveLetter = (Get-Item -Path VMDeploy:\).FullName -replace ':.+'
+	Get-Volume -DriveLetter $driveLetter | Get-Partition | Get-Disk | Set-Disk -IsReadOnly $false
+
 	$filePath = Join-Path -Path 'VMDeploy:\Resources' -ChildPath $Configuration.FileName
 	if (-not (Test-Path -Path $filePath)) {
 		Write-PSFMessage -Level Warning -Message "Certificate file not found in the VMDeploy package! Ensure the $($Configuration.FileName) certificate is deployed as a resource!"
@@ -14,11 +17,11 @@
 	if (Test-Path -LiteralPath $fullPWFilePath) { $password = Get-Content -LiteralPath $fullPWFilePath }
 	try {
 		if (-not $password) {
-			$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromCertFile($fullFilePath)
+			$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($fullFilePath)
 		}
 		else {
 			$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new()
-			$certificate.Import($filePath, $password, 'MachineKeySet')
+			$certificate.Import($fullFilePath, $password, 'MachineKeySet')
 		}
 	}
 	catch {
@@ -38,7 +41,10 @@
 		return
 	}
 
-	try { $store.Add($certificate) }
+	try {
+		$store.Add($certificate)
+		$store.Close()
+	}
 	catch {
 		Write-PSFMessage -Level Warning -Message "Error writing certificate $($Configuration.FileName) to certificate store $($Configuration.Store)" -ErrorRecord $_
 		return
@@ -57,20 +63,26 @@ $validationCode = {
 	}
 	$fullFilePath = (Get-Item -Path $filePath).FullName
 	$fullPWFilePath = "$($fullFilePath)_password"
+	$fullThumbprintPath = "$($fullFilePath)_thumbprint"
 	$password = ''
-	if (Test-Path -LiteralPath $fullPWFilePath) { $password = Get-Content -LiteralPath $fullPWFilePath }
-	try {
-		if (-not $password) {
-			$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::CreateFromCertFile($fullFilePath)
-		}
-		else {
-			$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new()
-			$certificate.Import($filePath, $Configuration.Password, 'MachineKeySet')
-		}
+	if (Test-Path -LiteralPath $fullThumbprintPath) {
+		$certificate = @{ Thumbprint = Get-Content -LiteralPath $fullThumbprintPath | Select-Object -First 1 }
 	}
-	catch {
-		Write-PSFMessage -Level Warning -Message "Error opening certificate $($Configuration.FileName)" -ErrorRecord $_
-		return $false
+	else {
+		if (Test-Path -LiteralPath $fullPWFilePath) { $password = Get-Content -LiteralPath $fullPWFilePath }
+		try {
+			if (-not $password) {
+				$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($fullFilePath)
+			}
+			else {
+				$certificate = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new()
+				$certificate.Import($fullFilePath, $password, 'MachineKeySet')
+			}
+		}
+		catch {
+			Write-PSFMessage -Level Warning -Message "Error opening certificate $($Configuration.FileName)" -ErrorRecord $_
+			return $false
+		}
 	}
 
 	try {
@@ -88,6 +100,7 @@ $validationCode = {
 	$result = $store.Certificates.ThumbPrint -contains $certificate.ThumbPrint
 	if ($result -and (Test-Path -LiteralPath $fullPWFilePath)) {
 		Remove-Item -LiteralPath $fullPWFilePath
+		$certificate.ThumbPrint | Set-Content -Path $fullThumbprintPath
 	}
 	$result
 }

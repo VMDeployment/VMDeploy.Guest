@@ -56,27 +56,14 @@
 	}
 	process {
 		if ($die) { return }
-		
-		#region Gather configuration entry state before processing
-		Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Test.Starting'
-		foreach ($configuration in Get-VMGuestConfiguration) {
-			Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Configuration.Testing' -StringValues $configuration.Identity, $configuration.Action -Target $configuration
-			$currentState[$configuration.Identity] = Test-VMGuestConfiguration -Identity $configuration.Identity -Quiet -NoPersistence
-			Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Configuration.Testing.Completed' -StringValues $configuration.Identity, $configuration.Action, $currentState[$configuration.Identity] -Target $configuration
-		}
-		Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Test.Completed'
-		#endregion Gather configuration entry state before processing
-		
+
 		$configurations = Get-VMGuestConfiguration | Sort-Object Weight, Identity
+				
 		Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Processing.Starting'
 		:main foreach ($configuration in $configurations) {
-			#region Check Prerequisites
 			Write-PSFMessage -Level Host -String 'Invoke-VMGuestConfiguration.Configuration.Processing' -StringValues $configuration.Identity, $configuration.Action -Target $configuration
-			if ($currentState[$configuration.Identity]) {
-				Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Configuration.DoneSkipping' -StringValues $configuration.Identity, $configuration.Action -Target $configuration
-				continue
-			}
 			
+			#region Check Prerequisites
 			if (-not $script:actions[$configuration.Action]) {
 				Write-PSFMessage -Level Warning -String 'Invoke-VMGuestConfiguration.Configuration.ActionMissing' -StringValues $configuration.Identity, $configuration.Action -Target $configuration
 				continue
@@ -88,11 +75,20 @@
 					continue main
 				}
 			}
+
+			Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Configuration.Testing' -StringValues $configuration.Identity, $configuration.Action -Target $configuration
+			$currentState[$configuration.Identity] = Test-VMGuestConfiguration -Identity $configuration.Identity -Quiet -NoPersistence
+			Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Configuration.Testing.Completed' -StringValues $configuration.Identity, $configuration.Action, $currentState[$configuration.Identity] -Target $configuration
+
+			if ($currentState[$configuration.Identity]) {
+				Write-PSFMessage -String 'Invoke-VMGuestConfiguration.Configuration.DoneSkipping' -StringValues $configuration.Identity, $configuration.Action -Target $configuration
+				continue
+			}
 			#endregion Check Prerequisites
 			
 			#region Implement
 			Invoke-PSFProtectedCommand -ActionString 'Invoke-VMGuestConfiguration.Configuration.Execute' -ActionStringValues $configuration.Identity, $configuration.Action -ScriptBlock {
-				$null = $script:actions[$configuration.Action].ScriptBlock.Invoke($configuration.Parameters)
+				$null = & $script:actions[$configuration.Action].ScriptBlock $configuration.Parameters
 			} -Target $configuration -Continue
 			
 			$currentState[$configuration.Identity] = Test-VMGuestConfiguration -Identity $configuration.Identity -Quiet

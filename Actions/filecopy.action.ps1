@@ -5,7 +5,6 @@
 
 	foreach ($item in $Configuration.Path) {
 		$targetPath = Join-Path -Path $Configuration.Destination -ChildPath $item
-		if (Test-Path -Path $targetPath) { continue }
 
 		$sourcePath = Join-Path -Path 'VMDeploy:\Resources' -ChildPath $item
 		Copy-Item -Path $sourcePath -Destination $targetPath -Recurse -Force
@@ -18,8 +17,17 @@ $validationCode = {
 	)
 
 	foreach ($item in $Configuration.Path) {
+		$sourcePath = Join-Path -Path 'VMDeploy:\Resources' -ChildPath $item
 		$targetPath = Join-Path -Path $Configuration.Destination -ChildPath $item
+
 		if (-not (Test-Path -Path $targetPath)) { return $false }
+
+		if (Test-Path -Path $sourcePath -PathType Leaf) {
+			$sourceHash = Get-FileHash -Path $sourcePath
+			$targetHash = Get-FileHash -Path $targetPath
+
+			if ($sourceHash.Hash -ne $targetHash.Hash) { return $false }
+		}
 	}
 
 	$true

@@ -3,7 +3,7 @@
 @{
 	'Import-VMGuestConfiguration.Config.Import'                   = 'Importing configuration from {0} : {1} ({2})' # $fileObject.FullName, $datumHash.Identity, $datumHash.Action
 	'Import-VMGuestConfiguration.File.AccessError'                = 'Failed to access {0}' # $pathItem
-	'Import-VMGuestConfiguration.File.Processing'                 = 'Failed to process {0}' # $pathItem
+	'Import-VMGuestConfiguration.File.Processing'                 = 'Processing config file: {0}' # $pathItem
 	
 	'Invoke-VMGuestConfiguration.Configuration.ActionMissing'     = 'The action {1} required for {0} is missing' # $configuration.Identity, $configuration.Action
 	'Invoke-VMGuestConfiguration.Configuration.DependencyNotDone' = 'Cannot process {0} ({1}) as dependency {2} has not been completed. Skipping.' # $configuration.Identity, $configuration.Action, $dependency
@@ -16,8 +16,6 @@
 	'Invoke-VMGuestConfiguration.Finished'                        = 'All configuration items have been applied, deployment complete' # 
 	'Invoke-VMGuestConfiguration.InvokeCount.Exceeded'            = 'Maximum number of guest configuration executions exceeded: {0} / {1}' # $currentInvokeCount, $MaxInvokeCount
 	'Invoke-VMGuestConfiguration.Processing.Starting'             = 'Starting application of configuration entries' # 
-	'Invoke-VMGuestConfiguration.Test.Completed'                  = 'Initial test completed.' # 
-	'Invoke-VMGuestConfiguration.Test.Starting'                   = 'Starting initial test of defined configuration entries.' # 
 	
 	'Register-VMGuestConfiguration.BadParameters'                 = 'Error defining configuration {0} ({1}) - bad parameters. Missing required: {2} | Unknown parameters: {3}' # $Identity, $Action, ($parameterResult.MandatoryMissing -join ','), ($parameterResult.UnknownParameters -join ',')
 }

@@ -16,7 +16,7 @@
 	switch ($Configuration.CertRoles) {
 		'RDP' {
 			$instance = Get-CimInstance -Namespace root\cimv2\TerminalServices -ClassName Win32_TSGeneralSetting -Filter 'TerminalName = "RDP-TCP"'
-			$instance | Set-CimInstance -Property @{ SSLCertificateSHA1Hash = $certObject.Thumbprint }
+			$instance | Set-CimInstance -Property @{ SSLCertificateSHA1Hash = $certObject.Thumbprint } -ErrorAction Stop
 		}
 	}
 }

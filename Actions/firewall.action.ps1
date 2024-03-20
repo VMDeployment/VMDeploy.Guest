@@ -27,6 +27,7 @@ $validationCode = {
 	foreach ($property in $properties) {
 		if ($Configuration.Keys -notcontains $property) { continue }
 		if ($Configuration.$property -eq $fwConfig.$property) { continue }
+		Write-PSFMessage -Level Verbose -Message 'Firewall Config Mismatch in property "{0}". Found: {1} | Expected: {2}' -StringValues $property, $fwConfig.$property, $Configuration.$property
 		return $false
 	}
 	$true

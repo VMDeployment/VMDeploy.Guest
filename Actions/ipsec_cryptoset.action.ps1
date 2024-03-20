@@ -25,6 +25,10 @@
 	if ($Configuration.Default) { $paramCrypto.Default = $Configuration.Default }
 
 	$null = New-NetIPsecMainModeCryptoSet @paramCrypto
+
+	# Enforce Policy Application
+	$null = gpupdate
+	Restart-Service ikeext
 }
 
 $validationCode = {
