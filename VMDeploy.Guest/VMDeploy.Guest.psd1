@@ -3,7 +3,7 @@
 	RootModule = 'VMDeploy.Guest.psm1'
 	
 	# Version number of this module.
-	ModuleVersion = '1.0.0'
+	ModuleVersion = '1.0.10'
 	
 	# ID used to uniquely identify this module
 	GUID = '254b0808-8c89-47f9-b9fa-97e865a56d1e'

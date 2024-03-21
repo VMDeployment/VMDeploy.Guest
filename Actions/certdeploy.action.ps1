@@ -42,8 +42,19 @@
 	}
 
 	try {
-		$store.Add($certificate)
-		$store.Close()
+		if ($password) {
+			$store.Close()
+			$param = @{
+				FilePath          = $fullFilePath
+				CertStoreLocation = "Cert:\LocalMachine\$($Configuration.Store)"
+				Password          = $password | ConvertTo-SecureString -AsPlainText -Force
+			}
+			Import-PfxCertificate @param -ErrorAction Stop
+		}
+		else {
+			$store.Add($certificate)
+			$store.Close()
+		}
 	}
 	catch {
 		Write-PSFMessage -Level Warning -Message "Error writing certificate $($Configuration.FileName) to certificate store $($Configuration.Store)" -ErrorRecord $_

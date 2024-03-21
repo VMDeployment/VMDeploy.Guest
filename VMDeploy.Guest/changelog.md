@@ -1,6 +1,6 @@
 ﻿# Changelog
 
-## ???
+## 1.0.10 (2024-03-21)
 
 + New: Action: CertDeploy - deploy a certificate (such as a root CA cert) to a selected certificate store
 + New: Action: ScriptBlock - execute a custom scriptblock
