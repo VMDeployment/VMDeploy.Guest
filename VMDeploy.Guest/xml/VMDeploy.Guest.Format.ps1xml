@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-16"?>
+<Configuration>
+    <ViewDefinitions>
+        <!-- VMDeploy.Guest.Action -->
+        <View>
+            <Name>VMDeploy.Guest.Action</Name>
+            <ViewSelectedBy>
+                <TypeName>VMDeploy.Guest.Action</TypeName>
+            </ViewSelectedBy>
+            <TableControl>
+                <AutoSize/>
+                <TableHeaders>
+                    <TableColumnHeader/>
+                    <TableColumnHeader>
+                        <Label>Parameters</Label>
+                    </TableColumnHeader>
+                </TableHeaders>
+                <TableRowEntries>
+                    <TableRowEntry>
+                        <TableColumnItems>
+                            <TableColumnItem>
+                                <PropertyName>Name</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <ScriptBlock>
+
+  $res = @()
+  foreach ($par in $_.ParameterMandatory) { $res += ', {0}' -f $par }
+  foreach ($par in $_.ParameterOptional) { $res += '[, {0}]' -f $par }
+  ($res -join "").Trim(",")
+
+                                </ScriptBlock>
+                            </TableColumnItem>
+                        </TableColumnItems>
+                    </TableRowEntry>
+                </TableRowEntries>
+            </TableControl>
+        </View>
+		
+        <!-- VMDeploy.Guest.Configuration.TestResult -->
+        <View>
+            <Name>VMDeploy.Guest.Configuration.TestResult</Name>
+            <ViewSelectedBy>
+                <TypeName>VMDeploy.Guest.Configuration.TestResult</TypeName>
+            </ViewSelectedBy>
+            <TableControl>
+                <AutoSize/>
+                <TableHeaders>
+                    <TableColumnHeader/>
+                    <TableColumnHeader/>
+                    <TableColumnHeader/>
+                    <TableColumnHeader/>
+                </TableHeaders>
+                <TableRowEntries>
+                    <TableRowEntry>
+                        <TableColumnItems>
+                            <TableColumnItem>
+                                <PropertyName>Action</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>Identity</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>Success</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>Type</PropertyName>
+                            </TableColumnItem>
+                        </TableColumnItems>
+                    </TableRowEntry>
+                </TableRowEntries>
+            </TableControl>
+        </View>
+    </ViewDefinitions>
+</Configuration>
