@@ -3,6 +3,36 @@
 		$Configuration
 	)
 
+	#region Override Get-NetConnectionProfile
+	# An interface that has two Connection Profiles will cause Get-NetIPConfiguration to fail
+	function Update-NetConnection {
+		[CmdletBinding()]
+		param ()
+	
+		Import-Module NetConnection -Scope Global
+		function global:Get-MyNetConnectionProfile {
+			[Alias('Get-NetConnectionProfile')]
+			[CmdletBinding()]
+			param (
+				$Name,
+				$InterfaceAlias,
+				$InterfaceIndex,
+				$NetworkCategory,
+				$IPv4Connectivity,
+				$IPv6Connectivity,
+				$CimSession,
+				$ThrottleLimit,
+				$AsJob
+			)
+	
+			Write-Verbose "Executing overridden Get-NetConnectionProfile"
+			$command = Get-Command Get-NetConnectionProfile -CommandType Function
+			& $command @PSBoundParameters | Microsoft.PowerShell.Utility\Select-Object -First 1
+		}
+	}
+	Update-NetConnection
+	#endregion Override Get-NetConnectionProfile
+
 	$netConfigs = Get-NetIPConfiguration
 	$netConfig = $netConfigs | Where-Object InterfaceAlias -EQ Ethernet | Select-Object -First 1
 	if (-not $netConfig) { $netConfig = $netConfigs | Where-Object InterfaceAlias -NotLike 'Loopback Pseudo-Interface*' | Select-Object -First 1 }
@@ -23,7 +53,7 @@
 		$ipAddress = $netConfig.IPv4Address[0]
 		if ($Configuration.IPAddress) { $ipAddress = $netConfig.IPv4Address | Where-Object IPAddress -EQ $Configuration.IPAddress }
 		if ($ipAddress.PrefixLength -ne $Configuration.PrefixLength) {
-			Set-NetIPAddress -IPAddress $ipAddress -InterfaceIndex 5 -PrefixLength $Configuration.PrefixLength -Confirm:$false
+			Set-NetIPAddress -IPAddress $ipAddress -InterfaceIndex $netConfig.InterfaceIndex -PrefixLength $Configuration.PrefixLength -Confirm:$false
 		}
 	}
 	if ($Configuration.DefaultGateway) {
@@ -45,6 +75,36 @@ $validationCode = {
 	param (
 		$Configuration
 	)
+
+	#region Override Get-NetConnectionProfile
+	# An interface that has two Connection Profiles will cause Get-NetIPConfiguration to fail
+	function Update-NetConnection {
+		[CmdletBinding()]
+		param ()
+	
+		Import-Module NetConnection -Scope Global
+		function global:Get-MyNetConnectionProfile {
+			[Alias('Get-NetConnectionProfile')]
+			[CmdletBinding()]
+			param (
+				$Name,
+				$InterfaceAlias,
+				$InterfaceIndex,
+				$NetworkCategory,
+				$IPv4Connectivity,
+				$IPv6Connectivity,
+				$CimSession,
+				$ThrottleLimit,
+				$AsJob
+			)
+	
+			Write-Verbose "Executing overridden Get-NetConnectionProfile"
+			$command = Get-Command Get-NetConnectionProfile -CommandType Function
+			& $command @PSBoundParameters | Microsoft.PowerShell.Utility\Select-Object -First 1
+		}
+	}
+	Update-NetConnection
+	#endregion Override Get-NetConnectionProfile
 
 	$netConfigs = Get-NetIPConfiguration
 	$netConfig = $netConfigs | Where-Object InterfaceAlias -EQ Ethernet | Select-Object -First 1
